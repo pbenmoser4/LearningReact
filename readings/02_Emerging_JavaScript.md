@@ -129,3 +129,148 @@ var lordify = (firstName, land) => {
 
   return `${firstName} of ${land}`
 }
+```
+
+We can use arrow function syntax to protect the scope of `this`:
+
+```javascript
+var tahoe = {
+  resorts: ["Kirkwood", "Squaw", "Alpine", "Heavenly", "Northstar"],
+  print: function(delay=1000) {
+    setTimeout(() => {
+      console.log(this.resorts.join(", "))
+    }, delay)
+  }
+}
+
+tahoe.print()
+```
+
+## Transpiling ES6
+
+The only way to be sure that every browser will support the code that you've lovingly written using ES6 syntax is to transpile it into vanilla JavaScript. `Babel` does a great job of this.
+
+You can technically allow your browser to do the transpiling, by including a CDN link for `babel-core` in your HTML, but this is slow and cumbersome. Will go over how to approach this for production pages in ch5.
+
+## ES6 Objects and Arrays
+
+### Destructuring Assignment
+
+Allows us to locally scope fields within an object and to declare which values will be used.
+
+```javascript
+var sandwich = {
+  bread: "dutch crunch",
+  meat = "tuna",
+  cheese: "swiss",
+  toppings: ["lettuce", "tomato", "mustard"]
+}
+
+var {bread, meat} = sandwich // creates new local variables bread and meat
+
+// changing the local variables
+bread = "garlic"
+meat = "turkey"
+
+console.log(sandwich.bread, sandwich.meat) // dutch crunch tuna
+```
+
+Can also destructure incoming function arguments:
+
+```javascript
+// Not destructuring
+var lordiy = regularPerson => {
+  console.log(`${regularPerson.firstname} of Canterbury`)
+}
+
+var regularPerson = {
+  firstname: "Bill",
+  lastname: "Wilson"
+}
+
+lordify(regularPerson)  // Bill of Canterbury
+
+// With destructuring
+var lordify = ({firstname}) => {
+  console.log(`${firstname} of Canterbury`)
+}
+
+lordify(regularPerson)  // Bill of Canterbury
+```
+
+This makes it more decalrative - we're saying that we explicitly only want the `firstname` variable from the input.
+
+You can also destructure values from an array:
+
+```javascript
+var [firstResort] = ["Kirkwood", "Squaw", "Alpine"]
+console.log(firstResort) // Kirkwood
+
+var [,,thirdResort] = ["Kirkwood", "Squaw", "Alpine"]
+console.log(thirdResort) // Alpine
+```
+
+### Object Literal Enhancement
+
+Grabbing variables from the global scope and putting them back into objects.
+
+```javascript
+var name = "Tallac"
+var elevation = 9738
+
+var funHike = {name, elevation}
+
+console.log(funHike) // {name: "Tallac", elevation: 9738}
+```
+
+We can extend the same approach to functions:
+
+```javascript
+var name = "Tallac"
+var elevation = 9738
+var print = function() {
+  console.log(`Mt. ${this.name} is ${this.elevation} feet tall`)
+}
+
+var funHike = {name, elevation, print}
+
+funHike.print() // Mt. Tallac is 9738 feet tall
+```
+
+New object literal enhancement version of declaring Objects:
+
+```javascript
+// OLD
+var skier = {
+  name: name,
+  sound: sound,
+  powderYell: function() {
+    var yell = this.sound.toUpperCase()
+    console.log(`${yell} ${yell} ${yell}!!!`)
+  },
+  speed: function(mph) {
+    this.speed = mph
+    console.log('speed:', mph)
+  }
+}
+
+//NEW
+const skier = {
+  name,
+  sound,
+  powderYell() {
+    let yell = this.sound.toUpperCase()
+    console.log(`${yell} ${yell} ${yell}!!!`)
+  },
+  speed(mph) {
+    this.speed = mph
+    console.log('speed:', mph)
+  }
+}
+```
+
+Pulling global variables into objects.
+
+### The Spread Operator
+
+Three dots `...` that perform several different tasks:
