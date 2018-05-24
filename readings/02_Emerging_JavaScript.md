@@ -349,3 +349,103 @@ getFakeMembers(5).then( // getFakeMembers() produces a promise which is acted up
   err => console.error(new Error("cannot load members from randomuser.me"))
 )
 ```
+
+## Classes
+
+```javascript
+// Old way of doing classes:
+function Vacation(destination, length) {
+  this.destination = destination
+  this.length = length
+}
+
+Vacation.prototype.print = function() {
+  console.log(this.destination + " | " + this.length + " days")
+}
+
+var maui = new Vacation("Maui", 7)
+```
+
+JavaScript still works the same way - functions are objects and inheritance is handled through the prototype. But, there are also some changes:
+
+```javascript
+class Vacation {
+  constructor(destination, length) {
+    this.destination = destination
+    this.length = length
+  }
+
+  print() {
+    console.log(`${this.destination} will take ${this.length} days.`)
+  }
+}
+
+//Constructing an instance of the new class:
+const trip = new Vacation("Santiago, Chile", 7)
+```
+
+Classes can be extended, and the subclass inherits the properties and methods of the superclass.
+
+```javascript
+class Expedition extends Vacation {
+  constructor(destination, length, gear){
+    super(destination, length)
+    this.gear = gear
+  }
+
+  print() {
+    super.print()
+    console.log(`Bring your ${this.gear.join(" and your ")}`)
+  }
+}
+```
+
+This book is going to focus on functional approaches rather than OOP paradigms.
+
+## ES6 Modules
+
+JavaScript itself supports modules now - you don't need to import and external library. You can either export one JavaScript object per module, or multiple JavaScript objects from a single module; one file per module.
+
+```javascript
+export const print(message) => log(message, new Date())
+
+export const log(message, timestamp) => console.log(`${timestamp.toString()}: ${message}`)
+```
+
+`export` can be used to export any JavaScript type that will be consumed in another module. Anything not exported using `export` will be local to that module.
+
+Importing modules uses the `import` statement.
+
+```javascript
+import { print, log } from './text-helpers' // using object destructuring
+import freel from './mt-freel'
+```
+
+You can also scope module variables locally under different variable names:
+
+```javascript
+import {print as p, log as l} from './text-helpers'
+```
+
+Or you can import everything with *
+
+```javascript
+import * as fns from './text-helpers'
+```
+
+## CommonJS
+
+If you're using the old school way, you'll use:
+
+```javascript
+const print(message) => log(message, new Date())
+
+const log(message, timestamp) => console.log(`${timestamp.toString()}: ${message}`)
+
+module.exports = {print, log}
+
+// To import:
+const {log, print } = require('./txt-helpers')
+```
+
+You should probably just go with the new way, because things evolve relatively quickly, and Babel can handle the things that don't.
