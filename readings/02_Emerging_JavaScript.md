@@ -274,3 +274,78 @@ Pulling global variables into objects.
 ### The Spread Operator
 
 Three dots `...` that perform several different tasks:
+
+```javascript
+// combining arrays
+var peaks = ["Tallac", "Ralston", "Rose"]
+var canyons = ["Ward", "Blackwood"]
+var tahoe = [...peaks, ...canyons]
+
+// Getting the last object of an array:
+// Mutations:
+var [last] = peaks.reverse() // you've mutated the original array
+
+var [last] = [...peaks].reverse() // you've copied peaks and mutated the copy, leaving the original intact
+```
+
+You can also use the spread operator to reference a subset of items within an array:
+
+```javascript
+var lakes = ["Donner", "Marlette", "Fallen Leaf", "Cascade"]
+var [first, ...rest] = lakes
+console.log(rest.join(', ')) // "Marlette", "Fallen Leaf", "Cascade"
+```
+
+You can also use the `spread` operator in a way similar to `*args` in Python: taking in function arguments as an array.
+
+```javascript
+function directions(...args) {
+  var [start, ...remaining] = args
+  var [finish, ...stops] = remaining.reverse()
+}
+
+directions(
+  "Truckee",
+  "Tahoe City",
+  "Sunnyside",
+  "Homewood",
+  "Tahoma"
+)
+```
+
+The spread operator can also be used on Objects:
+
+```javascript
+var morning = {
+  breakfast: "oatmeal",
+  lunch: "peanut butter and jelly"
+}
+
+var dinner = "mac and cheese"
+
+var backpackingMeals = {
+  ...morning,
+  dinner
+}
+```
+
+## Promises
+
+Giving us a way to make sense of asynchronous behavior - simplifies requests into a simple pass or fail response. If a promise is successful, the data loads, if it's not, then an error occurs.
+
+```javascript
+const getFakeMembers = count => new Promise((resolves, rejects) => {
+  const api = `https://api.randomuser.me/?nat=US&results=${count}`
+  const request = new XMLHttpRequest()
+  request.open('GET', api)
+  request.onload = () => (request.status === 200) ? resolves(JSON.parse(request.response).results) : rejects(Error(request.statusText))
+  request.onerror = (err) => rejects(err)
+  request.send()
+})
+
+// Promise hasn't been used yet. To use it:
+getFakeMembers(5).then( // getFakeMembers() produces a promise which is acted upon using .then()
+  members => console.log(members),
+  err => console.error(new Error("cannot load members from randomuser.me"))
+)
+```
