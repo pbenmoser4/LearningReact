@@ -311,5 +311,204 @@ arr.reduce(callback[, initialValue])
 * `currentValue`: The current element being processed in the array
 * `currentIndex`__[optional]__: The index of the current element being processed in the array. Starts at index 0, if an `initialValue` is provided, and at index 1 otherwise.
 * `array`__[optional]__: The array `reduce()` was called upon.
+
 `initialValue`__[optional]__: Value to use as the first argument to the first call of the `callback`. If no initial value is supplied, the first element in the array will be used. Calling `reduce()` on an empty array without an initial value is an error.
 ---
+
+`Array.reduceRight()` does the same thing, but starts at the end of the array, rather than the beginning.
+
+### Higher-Order Functions
+
+Recall: higher-order functions are functions that can manipulate other functions. They can take functions in as arguments, or return functions, or both.
+
+Higher order functions that return other functions help us deal with asynchronicity in JavaScript.
+
+`Currying` is a formal technique:
+
+```javascript
+const userLogs = userName => message => console.log(`${userName} -> ${message}`)
+
+const log = userLogs("grandpa23")
+
+log("attempted to load 20 fake members")
+getFakeMembers(20).then(
+  members => log(`successfully loaded ${members.length} members`),
+  error => log("encountered an error loading members")
+)
+
+// grandpa23 -> attempted to load 20 fake members
+// grandpa23 -> successfully loaded 20 members
+
+// grandpa23 -> attempted to load 20 fake members
+// grandpa23 -> encountered an error loading members
+```
+
+### Recursion
+
+Functions that recall themselves. But beware, too much recursion can case JavaScript errors in a browser by overloading the call stack. The authors say to use recursion wherever possible, but this isn't 100% true. Close enough though.
+
+### Composition
+
+You're eventually going to need to take all those tiny pure functions and do something with them... I guess... right?
+
+Dot notation is one way to approach composition of multiple chained functions:
+
+```javascript
+const template = "hh:mm:ss tt"
+const clockTime = template.replace("hh", "03")
+      .replace("mm", "33")
+      .replace("ss", "33")
+      .replace("tt", "PM")
+```
+
+What happens when we need to chain 20 functions together? It's good to create a higher order function to compose them together:
+
+```javascript
+const both = date => appendAMPM(civilianHours(date))
+
+// becomes
+
+const both = compose(
+  civilianHours,
+  appendAMPM
+)
+
+both(new Date())
+```
+
+`compose()` is a higher order function that takes functions as arguments and returns a single value.
+
+```javascript
+const compose = (...fns) =>
+  (arg) =>
+    fns.reduce(
+      (composed, f) => f(composed),
+      arg
+    )
+```
+
+`compose()` takes in multiple functions as arguments and returns one single function that takes (in the definition above) `arg` as an argument.
+
+### Putting It All Together
+
+JavaScript allows you to be non-functional, but you should try not to, by doing these things:
+1. Keep data immutable
+2. Keep functions pure - accept at least one argument, return data or another function
+3. Use recursion over looping (wherever possible)
+
+Challenge is to build a ticking clock that displays hours, minutes, seconds, and time of day in civilian time. Each field must always have double digits. The display must change every second.
+
+```javascript
+// Imperative solution to this:
+setInterval(logClockTime, 1000);
+
+function logClocktime() {
+  var time = getClockTime();
+  console.clear();
+  console.log(time);
+}
+
+function getClockTime() {
+  var date = new Date();
+  var time = "";
+
+  var time = {
+    hours: date.getHours(),
+    minutes: date.getMinutes(),
+    seconds: date.getSeconds(),
+    ampm: "AM"
+  }
+
+  if (time.hours == 12) {
+    time.ampm = "PM";
+  } else if (time.hours > 12) {
+    time.ampm = "PM";
+    time.hours -= 12;
+  }
+
+  if (time.hours < 10) {
+    time.hours = "0" + time.hours;
+  }
+
+  if (time.minutes < 10) {
+    time.minutes = "0" + time.minutes;
+  }
+
+  if (time.seconds < 10) {
+    time.seconds = "0" + time.seconds;
+  }
+
+  return time.hours + ":" + time.minutes + ":" + time.seconds + ":" + time.ampm;
+}
+```
+
+This is full of large and complicated functions, and we can probably make it work a bit better. Let's try to break it up into smaller parts. First, let's create some simple building blocks:
+
+```javascript
+const oneSecond = () => 1000
+const getCurrentTime = () => new Date()
+const clear = () => console.clear()
+const log = message => console.log(message)
+
+// Creating deeper functions
+const serializeClockTime = date =>
+  ({
+    hours: date.getHours(),
+    minutes: date.getMinutes(),
+    seconds: date.getSeconds()
+  })
+
+const civilianHours = clockTime =>
+  ({
+    ...clockTime,
+    hours: (clockTime.hours > 12) ? clockTime.hours - 12 : clockTime.hours
+  })
+
+const appendAMPM = clockTime =>
+  ({
+    ...clockTime,
+    ampm: (clockTime.hours >= 12) ? "PM" : "AM"
+  })
+
+// Displaying the information
+const display = target => time => target(time)
+
+const formatClock = format =>
+  time => format.replace("hh", time.hours)
+                .replace("mm", time.minutes)
+                .replace("ss", time.seconds)
+                .replace("tt", time.ampm)
+
+const prependZero = key => clockTime =>
+  ({
+    ...clockTime,
+    [key]: (clockTime[key] < 10) ? "0" + clockTime[key] : clockTime[key]
+  })
+
+const convertToCivilianTime = clockTime => compose(
+  appendAMPM,
+  civilianHours
+)(clockTime)
+
+const doubleDigits = civilianTime => compose(
+  prependZero("hours"),
+  prependZero("minutes"),
+  prependZero("seconds")
+)(civilianTime)
+
+const startTicking = () => setInterval(
+  compose(
+    clear,
+    getCurrentTime,
+    serializeClockTime,
+    convertToCivilianTime,
+    doubleDigits,
+    formatClock("hh:mm:ss tt"),
+    display(log)
+  ),
+  oneSecond()
+)
+
+
+startTicking()
+```
