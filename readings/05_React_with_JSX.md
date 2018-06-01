@@ -415,3 +415,25 @@ Now that the bundle has been... bundled... we have to get it into our site:
 This allows us to debug using our original files
 
 #### Optimizing the bundle
+
+Minification (uglification) is the way to do this. It strips all white spaces, and makes variable names as short and abstract as possible. Webpack has tools built in that can take care of this for us.
+
+In the `module.exports` top level, add
+
+```js
+plugins: [
+  new webpack.optimize.UglifyJsPlugin({
+    sourceMap: true,
+    warnings: false,
+    mangle: true
+  })
+]
+```
+
+You know what, don't even worry about this ^^ their webpack info is out of date. See `./A03_Webpack.md`... whenever I get around to writing it.
+
+#### create-react-app
+
+Facebook created a tool that generates a basic React app for you. It's called `create-react-app`.
+
+See more info on their [github](https://github.com/facebook/create-react-app).
