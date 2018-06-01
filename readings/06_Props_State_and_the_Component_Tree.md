@@ -180,3 +180,59 @@ const Summary = ({ ingredients=0, steps=0, title='[recipe]' }) => {
 ```
 
 ## Refs
+
+Refs are a feature that allows React components to interact with child elements. The most common use case is children that take in user input.
+
+The app that we're working with allows users to save and manage specific hexadecimal colors.
+
+```js
+import { Component } from 'react'
+
+class AddColorForm extends Component {
+  render() {
+    return (
+      <form onSubmit={e=>e.preventDefault()}>
+        <input type="text" placeholder="color title..." required/>
+        <input type="color" required />
+        <button>ADD</button>
+      </form>
+    )
+  }
+}
+```
+
+The form defined above has three fields: a text field for naming colors, a color field for picking colors, and an add button. We added in `e.preventDefault()` so that the default form behavior is ignored when the form is submitted.
+
+Here's how we handle getting the information from the form:
+
+```js
+import { Component } from 'react'
+
+class AddColorForm extends Component {
+  constructor(props) {
+    super(props)
+    this.submit = this.submit.bind(this)
+  }
+
+  submit(e) {
+    const { _title, _color } = this.refs
+    e.preventDefault();
+    alert('New Color: ${_title.value} ${_color.value}')
+    _title.value = '';
+    _color.value = '#000000';
+    _title.focus();
+  }
+
+  render() {
+    return (
+      <form onSubmit={this.submit}>
+        <input ref="_title" type="text" placeholder="color title..." required/>
+        <input ref="_color" type="color" required/>
+        <button>ADD</button>
+      </form>
+    )
+  }
+}
+```
+
+We needed to add a constructor to this component because we moved `submit` to its own function, which means we must bind the scope of the component to `submit` (also any functions that need to access the component's scope with `this`).
