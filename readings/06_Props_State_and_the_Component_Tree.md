@@ -236,3 +236,154 @@ class AddColorForm extends Component {
 ```
 
 We needed to add a constructor to this component because we moved `submit` to its own function, which means we must bind the scope of the component to `submit` (also any functions that need to access the component's scope with `this`).
+
+We also added `ref` fields to the components whose values we're going to want to reference later. By creating the `_title` and `_color` ref attributes, we can access those elements with `this.refs_title` and `this.refs_color` (I don't know why).
+
+__Note__: when useing `React.createClass`, we don't need to deal with binding the `this` scope - React does that for us.
+
+### Inverse Data Flow
+
+This involves sending a callback function to the component as a property, which the component can then use to pass back data.
+
+```js
+const logColor = (title, color) => console.log(`New Color: ${title} | ${color}`)
+
+<AddColorForm onNewColor={logColor} />
+```
+
+And then within the `AddColorForm` component:
+
+```js
+submit(e) {
+  const {_title, _color} = this.refs
+  this.props.onNewColor(_title.value, _color.value)
+  _title.value = ''
+  _color.value = '#000000'
+  _title.focus()
+}
+```
+
+### Refs in Stateless Functional Components
+
+Here's `AddColorForm` as a stateless functional component:
+
+```js
+const AddColorForm = ({onNewColor=f=>f}) => {
+  let _title, _color
+  const submit = e => {
+    e.preventDefault()
+    onNewColor(_title.value, _color.value)
+    _title.value = ''
+    _color.value = "#000000"
+    _title.focus()
+  }
+  return (
+    <form onSubmit={submit}>
+      <input ref={input => _title = input} type="text" placeholder="color..." required/>
+      <input ref={input => _color = input} type="color" required/>
+      <button>ADD</button>
+    </form>
+  )
+}
+```
+
+## React State Management
+
+React components' properties are immutable. React state is a built-in option for managing data that will change within a component. State can be expressed in React components with a single JavaScript object; when the state of a component changes, the component renders a new UI to reflect those changes.
+
+### Introducing Component State
+
+Looking at an example of a star-based rating UI.
+
+```js
+const Star = ({ selected=false, onClick=f=>f }) =>
+  <div className={(selected) ? "star selected" : "star"} onClick={onClick}>
+  </div>
+
+Star.propTypes = {
+  selected: PropTypes.bool,
+  onClick: PropTypes.func
+}
+```
+
+`Star` here is a stateless functional component, which cannot have state, and is meant to be the child of a more complex, stateful component. It's good practice to keep as many components stateless as possible.
+
+We're going to leverage `Star` now to create a `StarRating` component, which the user can interact with.
+
+```js
+const StarRating = createClass({
+  displayName: 'StarRating',
+  propTypes: {
+    totalStarts: PropTypes.number
+  },
+  getDefaultProps() {
+    return {
+      totalStars: 5
+    }
+  },
+  getInitialState() {
+    return {
+      starsSelected: 0
+    }
+  },
+  change(starsSelected) {
+    this.setState({starsSelected})
+  },
+  render() {
+    const {totalStars} = this.props
+    const {starsSelected} = this.state
+    return (
+      <div className="star-rating">
+        {[...Array(totalStars)].map((n, i) =>
+          <Star key={i}
+              selected={i<starsSelected}
+              onClick={() => this.change(i+1)} />
+        )}
+        <p>{starsSelected} of {totalStars} stars</p>
+      </div>
+    )
+  }
+})
+```
+
+Notice how we initialize (and therefore define the presence of) state by adding `getInitialState()` to the `StarRating` configuration. So looking at the setup, we can see that `props` is used for permanent, immutable properties, and `state` is used for temporary, mutable properties.
+
+We can also use an ES6 component class to create this class:
+
+```js
+class StarRating extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      starsSelected: 0
+    }
+    this.change = this.change.bind(this)
+  }
+
+  change(starsSelected) {
+    this.setState({starsSelected})
+  }
+
+  render() {
+    const {totalStars} = this.props
+    const {starsSelected} = this.state
+
+    return (
+      <div className="star-rating">
+        {[...Array(totalStars)].map((n, i) =>
+          <Star key={i} selected={i<starsSelected} onClick={() => this.change(i+1)} />
+        )}
+        <p>{starsSelected} of {totalStars} stars</p>
+      </div>
+    )
+  }
+}
+
+StarRating.propTypes = {
+  totalStars: PropTypes.number
+}
+
+StarRating.defaultProps = {
+  totalStars: 5
+}
+```
