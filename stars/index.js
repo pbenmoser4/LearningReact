@@ -1,10 +1,10 @@
 import React from 'react'
 import { render } from 'react-dom'
-import StarRating from './components/StarRating'
+import App from './components/App'
 
 window.React = React
 
 render(
-  <StarRating totalStars={5}/>,
+  <App />,
   document.getElementById("react-container")
 )

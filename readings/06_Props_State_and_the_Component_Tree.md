@@ -387,3 +387,137 @@ StarRating.defaultProps = {
   totalStars: 5
 }
 ```
+
+### Initializing State from Properties
+
+The most common use for this is when we create a reusable component that we want to use across applications in different component trees. When using `createClass()`, the best way to approach this is by using the `componentWillMount()` method definition:
+
+```js
+
+const StarRating = createClass({
+  displayName: 'StarRating',
+  ...,
+  componentWillMount() {
+    const { starsSelected } = this.props
+    if (starsSelected) {
+      this.setState({starsSelected})
+    }
+  },
+  ...
+})
+```
+
+`componentWillMount` is part of the component lifecycle, which we go over more deeply in the next chapter.
+
+When you're using ES6 class components, things get even easier:
+
+```js
+constructor(props) {
+  super(props)
+  this.state = {
+    starsSelected: props.starsSelected || 0
+  }
+  this.change = this.change.bind(this)
+}
+```
+
+## State Within the Component Tree
+
+In many applications, it's possible to store all of your state in the root component; this is called having a "single source of truth".
+
+### Color Organizer App Overview
+
+The entire state of the previous color organizer application could be represented with a single array:
+
+```js
+{
+  colors: [
+    {
+      "id": "0175d1f0-a8c6-41bf-8d02-df5734d829a4",
+      "title": "ocean at dusk",
+      "color": "#00c4e2",
+      "rating": 5
+    },
+    {
+      "id": "83c7ba2f-7392-4d7d-9e23-35adbe186046",
+      "title": "lawn",
+      "color": "#26ac56",”
+      "rating": 3
+    },
+    {
+      "id": "a11e3995-b0bd-4d58-8c48-5e49ae7f7f23",
+      "title": "bright red",
+      "color": "#ff0000",
+      "rating": 0
+    }
+  ]
+}
+```
+
+When users add or remove colors, the will be added to or removed from this array. When users rate colors, their ratings will change in the array.
+
+### Passing Properties Down the Component Tree
+
+It makes more sense to use the `StarRating` component as a _presentational component_ and declare it as a stateless functional component, than to use it as we have in this chapter.
+
+```js
+const StarRating = ({starsSelected=0, totalStars=5, onRate=f=>f}) =>
+  <div className="star-rating">
+    {[...Array(totalStars)].map((n, i) =>
+      <Star key={i} selected={i<starsSelected} onClick={() => onRate(i+1)} />
+    )}
+    <p>{starsSelected} of {totalStars} stars</p>
+  </div>
+```
+
+We can see that starsSelected is no longer state, it's now a property. There's also a new `onRate()` callback function prop.
+
+Using this approach means that all state is passed down to child components as properties. In the color organizer app, state is just an array of colors that is declared in the `App` component.
+
+```js
+class App extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      colors: []
+    }
+  }
+  render() {
+    const {colors} = this.state
+    return(
+      <div className="app">
+        <AddColorForm/>
+        <ColorList colors={colors} />
+      </div>
+    )
+  }
+}
+```
+
+Initially, the list of colors held in `this.state` above is empty, but as users select colors, the array is updated, and the selected colors are passed on to `Color` components:
+
+```js
+const ColorList = ({ colors=[] }) =>
+  <div className="color-list">
+    {(colors.length === 0) ?
+      <p>No Colors Listed. (Add a Color)</p> :
+      colors.map(color => <Color key={color.id} {...color} />
+      )
+    }
+  </div>
+
+// Constructing the Color component
+const Color = ({ title, color, rating=0 }) =>
+  <section className="color">
+    <h1>{title}</h1>
+    <div className="color" style={{ backgroundColor: color }}>
+    </div>
+    <div>
+      <StarRating starsSelected={rating} />
+    </div>
+  </selection>
+```
+
+### Passing Data Back Up the Component Tree
+
+Use callbacks.
